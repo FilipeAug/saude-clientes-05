@@ -95,21 +95,26 @@ const Index = () => {
   
   // Prepare squad data for charts
   const prepareSquadData = (): SquadMetricData => {
-    const feeData: SquadFeeData[] = Object.entries(stats.feeBySquad).map(([squad, fee]) => ({
+    // Ensure all objects exist before using Object.entries
+    const feeBySquad = stats.feeBySquad || {};
+    const ltBySquad = stats.ltBySquad || {};
+    const ticketBySquad = stats.ticketBySquad || {};
+    
+    const feeData: SquadFeeData[] = Object.entries(feeBySquad).map(([squad, fee]) => ({
       name: squad,
       value: fee,
       color: squad === 'Templários' ? '#faa307' : '#9d0208',
       formattedValue: formatCurrency(fee)
     }));
     
-    const ltData: SquadFeeData[] = Object.entries(stats.ltBySquad).map(([squad, lt]) => ({
+    const ltData: SquadFeeData[] = Object.entries(ltBySquad).map(([squad, lt]) => ({
       name: squad,
       value: lt,
       color: squad === 'Templários' ? '#faa307' : '#9d0208',
       formattedValue: formatLT(lt)
     }));
     
-    const ticketData: SquadFeeData[] = Object.entries(stats.ticketBySquad).map(([squad, ticket]) => ({
+    const ticketData: SquadFeeData[] = Object.entries(ticketBySquad).map(([squad, ticket]) => ({
       name: squad,
       value: ticket,
       color: squad === 'Templários' ? '#faa307' : '#9d0208',
