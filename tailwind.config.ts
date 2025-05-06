@@ -64,15 +64,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				dashboard: {
-					background: '#141824',
-					card: '#1B2032',
+					background: '#1b1d23',
+					card: '#2b2f38',
+					accent: '#cb3646',
 					safe: '#3CDC86',
 					care: '#FFAB2D',
 					danger: '#FF5C5C',
 					warning: '#FFD166',
 					implementation: '#7A6AF7',
-					templarios: '#7A6AF7',
-					spartans: '#6AAFFF',
+					templarios: '#faa307',
+					spartans: '#9d0208',
 				},
 			},
 			borderRadius: {

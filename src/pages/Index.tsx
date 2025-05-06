@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from '@/components/MetricCard';
 import StatusPieChart, { StatusData } from '@/components/StatusPieChart';
-import SquadFeeChart, { SquadFeeData } from '@/components/SquadFeeChart';
+import SquadFeeChart, { SquadFeeData, SquadMetricData } from '@/components/SquadFeeChart';
 import ChatBox from '@/components/ChatBox';
 import SquadFilter from '@/components/SquadFilter';
 import { 
@@ -26,6 +26,10 @@ const formatCurrency = (value: number): string => {
   });
 };
 
+const formatLT = (value: number): string => {
+  return `${value.toFixed(1)} meses`;
+};
+
 const Index = () => {
   const [clients, setClients] = useState(generateMockClients());
   const [filteredClients, setFilteredClients] = useState(clients);
@@ -38,7 +42,9 @@ const Index = () => {
     averageLT: 0,
     averageTicket: 0,
     statusCounts: {} as Record<string, number>,
-    feeBySquad: {} as Record<string, number>
+    feeBySquad: {} as Record<string, number>,
+    ltBySquad: {} as Record<string, number>,
+    ticketBySquad: {} as Record<string, number>
   });
   
   useEffect(() => {
@@ -87,13 +93,33 @@ const Index = () => {
     }
   ];
   
-  // Prepare squad fee data for chart
-  const squadFeeData: SquadFeeData[] = Object.entries(stats.feeBySquad).map(([squad, fee]) => ({
-    name: squad,
-    value: fee,
-    color: squad === 'Templários' ? '#7A6AF7' : '#6AAFFF',
-    formattedValue: formatCurrency(fee)
-  }));
+  // Prepare squad data for charts
+  const prepareSquadData = (): SquadMetricData => {
+    const feeData: SquadFeeData[] = Object.entries(stats.feeBySquad).map(([squad, fee]) => ({
+      name: squad,
+      value: fee,
+      color: squad === 'Templários' ? '#faa307' : '#9d0208',
+      formattedValue: formatCurrency(fee)
+    }));
+    
+    const ltData: SquadFeeData[] = Object.entries(stats.ltBySquad).map(([squad, lt]) => ({
+      name: squad,
+      value: lt,
+      color: squad === 'Templários' ? '#faa307' : '#9d0208',
+      formattedValue: formatLT(lt)
+    }));
+    
+    const ticketData: SquadFeeData[] = Object.entries(stats.ticketBySquad).map(([squad, ticket]) => ({
+      name: squad,
+      value: ticket,
+      color: squad === 'Templários' ? '#faa307' : '#9d0208',
+      formattedValue: formatCurrency(ticket)
+    }));
+    
+    return { feeData, ltData, ticketData };
+  };
+  
+  const squadMetricData = prepareSquadData();
   
   const handleSquadChange = (squad: string) => {
     setSelectedSquad(squad);
@@ -117,23 +143,23 @@ const Index = () => {
           <MetricCard
             title="Total de Clientes"
             value={stats.totalClients}
-            icon={<Users className="w-6 h-6 text-dashboard-implementation" />}
+            icon={<Users className="w-6 h-6 text-dashboard-accent" />}
           />
           <MetricCard
             title="Fee Total"
             value={formatCurrency(stats.totalFee)}
-            icon={<TrendingUp className="w-6 h-6 text-dashboard-implementation" />}
+            icon={<TrendingUp className="w-6 h-6 text-dashboard-accent" />}
           />
           <MetricCard
             title="LT Médio"
             value={`${stats.averageLT.toFixed(1)} meses`}
-            icon={<BarChart className="w-6 h-6 text-dashboard-implementation" />}
+            icon={<BarChart className="w-6 h-6 text-dashboard-accent" />}
             trend="up"
           />
           <MetricCard
             title="Ticket Médio"
             value={formatCurrency(stats.averageTicket)}
-            icon={<MessageSquare className="w-6 h-6 text-dashboard-implementation" />}
+            icon={<MessageSquare className="w-6 h-6 text-dashboard-accent" />}
             trend="up"
           />
         </div>
@@ -144,7 +170,7 @@ const Index = () => {
             <StatusPieChart data={statusData} title="Status dos Clientes" />
           </div>
           <div className="lg:col-span-1">
-            <SquadFeeChart data={squadFeeData} title="Fee por Squad" />
+            <SquadFeeChart data={squadMetricData} title="Métricas por Squad" />
           </div>
         </div>
         
