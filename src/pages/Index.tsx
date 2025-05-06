@@ -1,11 +1,157 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect } from 'react';
+import MetricCard from '@/components/MetricCard';
+import StatusPieChart, { StatusData } from '@/components/StatusPieChart';
+import SquadFeeChart, { SquadFeeData } from '@/components/SquadFeeChart';
+import ChatBox from '@/components/ChatBox';
+import SquadFilter from '@/components/SquadFilter';
+import { 
+  Users, 
+  TrendingUp, 
+  BarChart,
+  MessageSquare
+} from 'lucide-react';
+import { 
+  generateMockClients, 
+  getClientStats, 
+  getUniqueSquads,
+  filterClientsBySquad
+} from '@/services/clientData';
+
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2
+  });
+};
 
 const Index = () => {
+  const [clients, setClients] = useState(generateMockClients());
+  const [filteredClients, setFilteredClients] = useState(clients);
+  const [selectedSquad, setSelectedSquad] = useState('todos');
+  const [squads, setSquads] = useState<string[]>([]);
+  
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    totalFee: 0,
+    averageLT: 0,
+    averageTicket: 0,
+    statusCounts: {} as Record<string, number>,
+    feeBySquad: {} as Record<string, number>
+  });
+  
+  useEffect(() => {
+    // Get unique squads
+    setSquads(getUniqueSquads(clients));
+  }, [clients]);
+  
+  useEffect(() => {
+    // Apply squad filter
+    const filtered = filterClientsBySquad(clients, selectedSquad);
+    setFilteredClients(filtered);
+  }, [clients, selectedSquad]);
+  
+  useEffect(() => {
+    // Calculate stats from filtered clients
+    const newStats = getClientStats(filteredClients);
+    setStats(newStats);
+  }, [filteredClients]);
+  
+  // Prepare status data for chart
+  const statusData: StatusData[] = [
+    { 
+      name: 'Safe', 
+      value: stats.statusCounts['Safe'] || 0, 
+      color: '#3CDC86' 
+    },
+    { 
+      name: 'Care', 
+      value: stats.statusCounts['Care'] || 0, 
+      color: '#FFAB2D' 
+    },
+    { 
+      name: 'Danger', 
+      value: stats.statusCounts['Danger'] || 0, 
+      color: '#FF5C5C' 
+    },
+    { 
+      name: 'Aviso Prévio', 
+      value: stats.statusCounts['Aviso Prévio'] || 0, 
+      color: '#FFD166' 
+    },
+    { 
+      name: 'Implementação', 
+      value: stats.statusCounts['Implementação'] || 0, 
+      color: '#7A6AF7' 
+    }
+  ];
+  
+  // Prepare squad fee data for chart
+  const squadFeeData: SquadFeeData[] = Object.entries(stats.feeBySquad).map(([squad, fee]) => ({
+    name: squad,
+    value: fee,
+    color: squad === 'Templários' ? '#7A6AF7' : '#6AAFFF',
+    formattedValue: formatCurrency(fee)
+  }));
+  
+  const handleSquadChange = (squad: string) => {
+    setSelectedSquad(squad);
+  };
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-dashboard-background text-white p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Dashboard de Clientes</h1>
+          <SquadFilter 
+            currentSquad={selectedSquad}
+            squads={squads}
+            onSquadChange={handleSquadChange}
+          />
+        </div>
+        
+        {/* Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            title="Total de Clientes"
+            value={stats.totalClients}
+            icon={<Users className="w-6 h-6 text-dashboard-implementation" />}
+          />
+          <MetricCard
+            title="Fee Total"
+            value={formatCurrency(stats.totalFee)}
+            icon={<TrendingUp className="w-6 h-6 text-dashboard-implementation" />}
+          />
+          <MetricCard
+            title="LT Médio"
+            value={`${stats.averageLT.toFixed(1)} meses`}
+            icon={<BarChart className="w-6 h-6 text-dashboard-implementation" />}
+            trend="up"
+          />
+          <MetricCard
+            title="Ticket Médio"
+            value={formatCurrency(stats.averageTicket)}
+            icon={<MessageSquare className="w-6 h-6 text-dashboard-implementation" />}
+            trend="up"
+          />
+        </div>
+        
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <StatusPieChart data={statusData} title="Status dos Clientes" />
+          </div>
+          <div className="lg:col-span-1">
+            <SquadFeeChart data={squadFeeData} title="Fee por Squad" />
+          </div>
+        </div>
+        
+        {/* Chat */}
+        <div className="h-[400px]">
+          <ChatBox />
+        </div>
       </div>
     </div>
   );
