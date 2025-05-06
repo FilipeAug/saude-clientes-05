@@ -71,21 +71,21 @@ const ChatBox: React.FC = () => {
     try {
       console.log("Sending request with sessionID:", sessionID);
       
-      // Prepare the params exactly as required by the webhook
-      const params = {
+      // Preparar os parâmetros da URL
+      const params = new URLSearchParams({
         message: inputValue,
         sessionID: sessionID
-      };
+      });
       
-      console.log("Request params:", params);
+      const url = `https://n8n-n8n.p6jvp3.easypanel.host/webhook/lovable?${params.toString()}`;
+      console.log("Request URL:", url);
       
-      const response = await fetch('https://n8n-n8n.p6jvp3.easypanel.host/webhook/lovable', {
-        method: 'POST',
+      // Fazer solicitação GET
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json'
-        },
-        body: JSON.stringify(params)
+        }
       });
       
       // Get text response first
