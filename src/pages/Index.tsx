@@ -12,11 +12,14 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { 
-  generateMockClients, 
+  Client,
   getClientStats, 
   getUniqueSquads,
-  filterClientsBySquad
+  filterClientsBySquad,
+  generateMockClients
 } from '@/services/clientData';
+import { fetchSheetsData } from '@/services/googleSheetsService';
+import { toast } from 'sonner';
 
 const formatCurrency = (value: number): string => {
   return value.toLocaleString('pt-BR', {
@@ -31,10 +34,11 @@ const formatLT = (value: number): string => {
 };
 
 const Index = () => {
-  const [clients, setClients] = useState(generateMockClients());
-  const [filteredClients, setFilteredClients] = useState(clients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [selectedSquad, setSelectedSquad] = useState('todos');
   const [squads, setSquads] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [stats, setStats] = useState({
     totalClients: 0,
@@ -46,6 +50,33 @@ const Index = () => {
     ltBySquad: {} as Record<string, number>,
     ticketBySquad: {} as Record<string, number>
   });
+  
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Try to load data from Google Sheets
+        const sheetsData = await fetchSheetsData();
+        if (sheetsData && sheetsData.length > 0) {
+          setClients(sheetsData);
+          toast.success('Dados carregados com sucesso do Google Sheets!');
+        } else {
+          // Fallback to mock data if no data from sheets
+          setClients(generateMockClients());
+          toast.info('Usando dados simulados. Não foi possível carregar do Google Sheets.');
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        // Use mock data as fallback
+        setClients(generateMockClients());
+        toast.error('Erro ao carregar dados. Usando dados simulados.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
   
   useEffect(() => {
     // Get unique squads
@@ -135,7 +166,10 @@ const Index = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard de Clientes</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard de Clientes</h1>
+            {isLoading && <p className="text-gray-400 animate-pulse">Carregando dados...</p>}
+          </div>
           <SquadFilter 
             currentSquad={selectedSquad}
             squads={squads}

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface SquadFeeData {
@@ -22,6 +22,22 @@ interface SquadFeeChartProps {
 }
 
 type MetricType = 'fee' | 'lt' | 'ticket';
+
+// Custom tooltip for better styling
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+
+  const data = payload[0].payload;
+  
+  return (
+    <div className="bg-white text-gray-800 p-2 rounded-md shadow-lg border border-gray-200">
+      <p className="font-bold">{data.name}</p>
+      <p className="text-sm">{data.formattedValue}</p>
+    </div>
+  );
+};
 
 const SquadFeeChart: React.FC<SquadFeeChartProps> = ({ data, title }) => {
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('fee');
@@ -86,15 +102,7 @@ const SquadFeeChart: React.FC<SquadFeeChartProps> = ({ data, title }) => {
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip
-              formatter={(value, name) => [displayData.find(item => item.name === name)?.formattedValue || value, name]}
-              contentStyle={{ 
-                backgroundColor: '#2b2f38',
-                border: '1px solid #3f4555',
-                borderRadius: '4px',
-                color: 'white'
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
       </div>
