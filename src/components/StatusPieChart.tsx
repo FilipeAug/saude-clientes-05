@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import React, { useEffect, useRef } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Label, Tooltip } from 'recharts';
 
 export interface StatusData {
   name: string;
@@ -13,22 +13,6 @@ interface StatusPieChartProps {
   data: StatusData[];
   title: string;
 }
-
-// Custom tooltip component for better styling
-const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) {
-    return null;
-  }
-
-  const data = payload[0].payload;
-  
-  return (
-    <div className="bg-white text-gray-800 p-2 rounded-md shadow-lg border border-gray-200">
-      <p className="font-bold">{data.name}</p>
-      <p className="text-sm">{data.percentage}</p>
-    </div>
-  );
-};
 
 const StatusPieChart: React.FC<StatusPieChartProps> = ({ data, title }) => {
   const processedData = data.map(item => ({
@@ -55,7 +39,18 @@ const StatusPieChart: React.FC<StatusPieChartProps> = ({ data, title }) => {
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip 
+              formatter={(value, name, props) => [
+                `${props.payload.percentage}`, 
+                props.payload.name
+              ]}
+              contentStyle={{ 
+                backgroundColor: '#1B2032',
+                border: '1px solid #2D344B',
+                borderRadius: '4px',
+                color: 'white'
+              }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>
