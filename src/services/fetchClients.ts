@@ -1,3 +1,4 @@
+
 /**
  * Busca dados de clientes da API do NocoDB e os transforma para interface Client[].
  */
@@ -5,17 +6,16 @@ import type { Client } from "./clientData";
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const NOCODB_API_KEY = import.meta.env.VITE_NOCODB_API_KEY;
-const PROJECT_NAME = "V4 Oxicore & Co";
-const TABLE_NAME = "Clientes";
+const NOCODB_TABLE_ID = import.meta.env.VITE_NOCODB_TABLE_ID;
 
 export async function fetchClients(): Promise<Client[]> {
-  if (!NOCODB_URL || !NOCODB_API_KEY) {
-    throw new Error("Credenciais do NocoDB não definidas (VITE_NOCODB_URL, VITE_NOCODB_API_KEY)");
+  if (!NOCODB_URL || !NOCODB_API_KEY || !NOCODB_TABLE_ID) {
+    throw new Error("Credenciais do NocoDB não definidas (VITE_NOCODB_URL, VITE_NOCODB_API_KEY, VITE_NOCODB_TABLE_ID)");
   }
 
   try {
-    // URL da API do NocoDB para a tabela de clientes
-    const url = `${NOCODB_URL}/api/v1/db/data/v1/${PROJECT_NAME}/${TABLE_NAME}`;
+    // URL da API do NocoDB V2 para a tabela de clientes
+    const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE_ID}/records?limit=100`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -51,7 +51,7 @@ export async function fetchClients(): Promise<Client[]> {
                 parseFloat(String(row.LT || "0").replace(",", ".")) || 0;
 
       return {
-        id: row.id || i + 1,
+        id: row.Id || i + 1,
         name: row.Cliente || `Cliente ${i + 1}`,
         squad: row.Squad || "Indefinido",
         fee,
@@ -63,61 +63,4 @@ export async function fetchClients(): Promise<Client[]> {
     console.error("Erro ao buscar dados do NocoDB:", error);
     throw error;
   }
-}
-
-// Função de fallback para Google Sheets caso NocoDB não esteja configurado
-export async function fetchClientsFromGoogleSheets(): Promise<Client[]> {
-  const SHEET_ID = import.meta.env.VITE_SHEET_ID;
-  const SHEET_NAME = "Central de Saúde";
-
-  if (!SHEET_ID) throw new Error("VITE_SHEET_ID não definido");
-
-  // URL CSV pública (timestamp reduz cache)
-  const url =
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
-    `?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Falha ao obter CSV do Google Sheets");
-  const csv = await res.text();
-
-  // Importa papaparse via NPM em vez de CDN para evitar problemas de TypeScript
-  const Papa = await import("papaparse").then(module => module.default);
-
-  const { data } = Papa.parse(csv, {
-    header: true,
-    skipEmptyLines: true,
-  });
-
-  // ---- transformar linhas brutas -> interface Client ------------
-  return data.map((row: any, i: number): Client => {
-    // Status (coluna "Status Atual")
-    let status: 'Safe' | 'Care' | 'Danger' | 'Aviso Prévio' | 'Implementação' = "Safe";
-    const rawStatus = String(row["Status Atual"] || "").trim();
-    if (rawStatus.includes("🔴")) status = "Danger";
-    else if (rawStatus.includes("🟡")) status = "Care";
-    else if (rawStatus.includes("⏳")) status = "Aviso Prévio";
-    else if (rawStatus.includes("⚙️") || /Implanta[çc]ão/.test(rawStatus))
-      status = "Implementação";
-
-    // Fee → número
-    const feeStr = String(row["Fee"] || "")
-      .replace("R$", "")
-      .replace(/\./g, "")
-      .replace(",", ".")
-      .trim();
-    const fee = parseFloat(feeStr) || 0;
-
-    // LT → número (virgula para ponto)
-    const lt = parseFloat(String(row["LT"] || "0").replace(",", ".")) || 0;
-
-    return {
-      id: i + 1,
-      name: row["Cliente"] || `Cliente ${i + 1}`,
-      squad: row["Squad"] || "Indefinido",
-      fee,
-      lt,
-      status,
-    };
-  });
 }

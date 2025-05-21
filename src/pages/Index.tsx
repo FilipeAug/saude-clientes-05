@@ -17,7 +17,7 @@ import {
   getUniqueSquads,
   filterClientsBySquad
 } from '@/services/clientData';
-import { fetchClients, fetchClientsFromGoogleSheets } from '@/services/fetchClients';
+import { fetchClients } from '@/services/fetchClients';
 import { useToast } from "@/hooks/use-toast";
 
 const formatCurrency = (value: number): string => {
@@ -38,17 +38,15 @@ const Index = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       try {
-        // Tentar primeiro o NocoDB
         return await fetchClients();
       } catch (e) {
-        console.warn("Erro ao buscar dados do NocoDB, tentando Google Sheets:", e);
+        console.error("Erro ao buscar dados do NocoDB:", e);
         toast({
-          title: "Aviso",
-          description: "Não foi possível conectar ao NocoDB. Usando dados do Google Sheets como fallback.",
+          title: "Erro",
+          description: "Não foi possível conectar ao NocoDB. Verifique as configurações do NocoDB e tente novamente.",
           variant: "destructive",
         });
-        // Fallback para Google Sheets
-        return fetchClientsFromGoogleSheets();
+        throw e;
       }
     },
     refetchInterval: 60000, // Auto refresh every minute
@@ -164,7 +162,7 @@ const Index = () => {
       <div className="min-h-screen bg-dashboard-background text-white p-6 flex items-center justify-center">
         <div className="bg-dashboard-card p-8 rounded-lg shadow-lg">
           <h1 className="text-2xl font-bold text-red-500 mb-4">Erro ao carregar dados</h1>
-          <p>Ocorreu um erro ao buscar os dados. Verifique as configurações do NocoDB ou Google Sheets.</p>
+          <p>Ocorreu um erro ao buscar os dados do NocoDB. Verifique as configurações do NocoDB.</p>
           <p className="mt-4 text-sm text-gray-400">Mensagem de erro: {(error as Error)?.message || "Erro desconhecido"}</p>
         </div>
       </div>
