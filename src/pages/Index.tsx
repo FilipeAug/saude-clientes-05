@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import MetricCard from '@/components/MetricCard';
@@ -18,7 +19,7 @@ import {
   filterClientsBySquad
 } from '@/services/clientData';
 import { fetchClients, fetchClientsFromGoogleSheets } from '@/services/fetchClients';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const formatCurrency = (value: number): string => {
   return value.toLocaleString('pt-BR', {
@@ -45,7 +46,7 @@ const Index = () => {
         toast({
           title: "Aviso",
           description: "Não foi possível conectar ao NocoDB. Usando dados do Google Sheets como fallback.",
-          variant: "warning",
+          variant: "destructive",
         });
         // Fallback para Google Sheets
         return fetchClientsFromGoogleSheets();

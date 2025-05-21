@@ -34,7 +34,7 @@ export async function fetchClients(): Promise<Client[]> {
     // Mapear os dados do NocoDB para o formato Client
     return data.list.map((row: any, i: number): Client => {
       // Status (coluna "Status Atual")
-      let status = "Safe";
+      let status: 'Safe' | 'Care' | 'Danger' | 'Aviso Prévio' | 'Implementação' = "Safe";
       const rawStatus = String(row.StatusAtual || "").trim();
       if (rawStatus.includes("🔴")) status = "Danger";
       else if (rawStatus.includes("🟡")) status = "Care";
@@ -95,7 +95,7 @@ export async function fetchClientsFromGoogleSheets(): Promise<Client[]> {
   // ---- transformar linhas brutas -> interface Client ------------
   return data.map((row: any, i: number): Client => {
     // Status (coluna "Status Atual")
-    let status = "Safe";
+    let status: 'Safe' | 'Care' | 'Danger' | 'Aviso Prévio' | 'Implementação' = "Safe";
     const rawStatus = String(row["Status Atual"] || "").trim();
     if (rawStatus.includes("🔴")) status = "Danger";
     else if (rawStatus.includes("🟡")) status = "Care";
