@@ -15,13 +15,13 @@ export async function fetchClients(): Promise<Client[]> {
 
   try {
     // URL da API do NocoDB para a tabela de clientes
-    const url = `${NOCODB_URL}/api/v2/tables/${TABLE_NAME}/records`;
+    const url = `${NOCODB_URL}/api/v1/db/data/v1/${PROJECT_NAME}/${TABLE_NAME}`;
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Accept": "application/json",
-        "xc-token": NOCODB_API_KEY
+        "Authorization": `Bearer ${NOCODB_API_KEY}`
       }
     });
 
