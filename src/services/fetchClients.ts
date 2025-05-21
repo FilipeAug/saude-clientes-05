@@ -6,7 +6,8 @@ import type { Client } from "./clientData";
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const NOCODB_API_KEY = import.meta.env.VITE_NOCODB_API_KEY;
-const TABLE_NAME = "Clientes"; // Nome da tabela no NocoDB
+const PROJECT_NAME = "V4 Oxicore & Co";
+const TABLE_NAME = "Clientes";
 
 export async function fetchClients(): Promise<Client[]> {
   if (!NOCODB_URL || !NOCODB_API_KEY) {
@@ -15,12 +16,12 @@ export async function fetchClients(): Promise<Client[]> {
 
   try {
     // URL da API do NocoDB para a tabela de clientes
-    const url = `${NOCODB_URL}/api/v1/db/data/v1/${TABLE_NAME}`;
+    const encodedProjectName = encodeURIComponent(PROJECT_NAME);
+    const url = `${NOCODB_URL}/api/v1/db/data/noco/${encodedProjectName}/${TABLE_NAME}?access_token=${NOCODB_API_KEY}`;
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "xc-auth": NOCODB_API_KEY,
         "Accept": "application/json"
       }
     });
@@ -81,11 +82,8 @@ export async function fetchClientsFromGoogleSheets(): Promise<Client[]> {
   if (!res.ok) throw new Error("Falha ao obter CSV do Google Sheets");
   const csv = await res.text();
 
-  // PapaParse ESM via CDN (sem precisar instalar pacote)
-  const Papa = (await import(
-    /* webpackIgnore: true */
-    "https://cdn.jsdelivr.net/npm/papaparse@5.4.1/+esm"
-  )).default;
+  // Importa papaparse via NPM em vez de CDN para evitar problemas de TypeScript
+  const Papa = await import("papaparse").then(module => module.default);
 
   const { data } = Papa.parse(csv, {
     header: true,
