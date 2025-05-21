@@ -1,4 +1,3 @@
-
 /**
  * Busca dados de clientes da API do NocoDB e os transforma para interface Client[].
  */
@@ -16,13 +15,13 @@ export async function fetchClients(): Promise<Client[]> {
 
   try {
     // URL da API do NocoDB para a tabela de clientes
-    const encodedProjectName = encodeURIComponent(PROJECT_NAME);
-    const url = `${NOCODB_URL}/api/v1/db/data/noco/${encodedProjectName}/${TABLE_NAME}?access_token=${NOCODB_API_KEY}`;
+    const url = `${NOCODB_URL}/api/v2/tables/${TABLE_NAME}/records`;
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "xc-token": NOCODB_API_KEY
       }
     });
 
