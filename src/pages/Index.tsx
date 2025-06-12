@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import MetricCard from '@/components/MetricCard';
 import StatusPieChart, { StatusData } from '@/components/StatusPieChart';
 import SquadFeeChart, { SquadFeeData, SquadMetricData } from '@/components/SquadFeeChart';
@@ -12,13 +12,11 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { 
-  Client,
+  generateMockClients, 
   getClientStats, 
   getUniqueSquads,
   filterClientsBySquad
 } from '@/services/clientData';
-import { fetchClients } from '@/services/fetchClients';
-import { useToast } from "@/hooks/use-toast";
 
 const formatCurrency = (value: number): string => {
   return value.toLocaleString('pt-BR', {
@@ -33,26 +31,8 @@ const formatLT = (value: number): string => {
 };
 
 const Index = () => {
-  const { toast } = useToast();
-  const { data: clients = [], isLoading, isError, error } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      try {
-        return await fetchClients();
-      } catch (e) {
-        console.error("Erro ao buscar dados do NocoDB:", e);
-        toast({
-          title: "Erro",
-          description: "Não foi possível conectar ao NocoDB. Verifique as configurações do NocoDB e tente novamente.",
-          variant: "destructive",
-        });
-        throw e;
-      }
-    },
-    refetchInterval: 60000, // Auto refresh every minute
-  });
-
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState(generateMockClients());
+  const [filteredClients, setFilteredClients] = useState(clients);
   const [selectedSquad, setSelectedSquad] = useState('todos');
   const [squads, setSquads] = useState<string[]>([]);
   
@@ -68,26 +48,20 @@ const Index = () => {
   });
   
   useEffect(() => {
-    // Get unique squads when clients data changes
-    if (clients && clients.length > 0) {
-      setSquads(getUniqueSquads(clients));
-    }
+    // Get unique squads
+    setSquads(getUniqueSquads(clients));
   }, [clients]);
   
   useEffect(() => {
-    // Apply squad filter when selected squad or clients change
-    if (clients) {
-      const filtered = filterClientsBySquad(clients, selectedSquad);
-      setFilteredClients(filtered);
-    }
+    // Apply squad filter
+    const filtered = filterClientsBySquad(clients, selectedSquad);
+    setFilteredClients(filtered);
   }, [clients, selectedSquad]);
   
   useEffect(() => {
     // Calculate stats from filtered clients
-    if (filteredClients.length > 0) {
-      const newStats = getClientStats(filteredClients);
-      setStats(newStats);
-    }
+    const newStats = getClientStats(filteredClients);
+    setStats(newStats);
   }, [filteredClients]);
   
   // Prepare status data for chart
@@ -156,19 +130,6 @@ const Index = () => {
     setSelectedSquad(squad);
   };
   
-  // Show loading or error states
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-dashboard-background text-white p-6 flex items-center justify-center">
-        <div className="bg-dashboard-card p-8 rounded-lg shadow-lg">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Erro ao carregar dados</h1>
-          <p>Ocorreu um erro ao buscar os dados do NocoDB. Verifique as configurações do NocoDB.</p>
-          <p className="mt-4 text-sm text-gray-400">Mensagem de erro: {(error as Error)?.message || "Erro desconhecido"}</p>
-        </div>
-      </div>
-    );
-  }
-  
   return (
     <div className="min-h-screen bg-dashboard-background text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -182,32 +143,27 @@ const Index = () => {
           />
         </div>
         
-        {/* Data Source Indicator */}
-        <div className="mb-4 text-sm text-dashboard-accent">
-          <p>Fonte de dados: {import.meta.env.VITE_NOCODB_URL ? 'NocoDB' : 'Google Sheets'}</p>
-        </div>
-        
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="Total de Clientes"
-            value={isLoading ? "..." : stats.totalClients}
+            value={stats.totalClients}
             icon={<Users className="w-6 h-6 text-dashboard-accent" />}
           />
           <MetricCard
             title="Fee Total"
-            value={isLoading ? "..." : formatCurrency(stats.totalFee)}
+            value={formatCurrency(stats.totalFee)}
             icon={<TrendingUp className="w-6 h-6 text-dashboard-accent" />}
           />
           <MetricCard
             title="LT Médio"
-            value={isLoading ? "..." : `${stats.averageLT.toFixed(1)} meses`}
+            value={`${stats.averageLT.toFixed(1)} meses`}
             icon={<BarChart className="w-6 h-6 text-dashboard-accent" />}
             trend="up"
           />
           <MetricCard
             title="Ticket Médio"
-            value={isLoading ? "..." : formatCurrency(stats.averageTicket)}
+            value={formatCurrency(stats.averageTicket)}
             icon={<MessageSquare className="w-6 h-6 text-dashboard-accent" />}
             trend="up"
           />

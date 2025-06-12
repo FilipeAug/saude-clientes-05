@@ -8,6 +8,60 @@ export interface Client {
   status: 'Safe' | 'Care' | 'Danger' | 'Aviso Prévio' | 'Implementação';
 }
 
+// Generate mock client data
+export const generateMockClients = (): Client[] => {
+  const squads = ['Templários', 'Spartans'];
+  const statuses: ('Safe' | 'Care' | 'Danger' | 'Aviso Prévio' | 'Implementação')[] = [
+    'Safe', 'Care', 'Danger', 'Aviso Prévio', 'Implementação'
+  ];
+  
+  // Probability distribution for statuses to match the pie chart
+  const statusProbability = [0.48, 0.25, 0.20, 0.05, 0.02]; // Safe, Care, Danger, Aviso Prévio, Implementação
+  
+  const clients: Client[] = [];
+  
+  for (let i = 1; i <= 61; i++) {
+    const squad = Math.random() > 0.55 ? squads[0] : squads[1];
+    
+    // Determine status based on probability
+    let statusIndex = 0;
+    const rand = Math.random();
+    let cumulativeProbability = 0;
+    
+    for (let j = 0; j < statusProbability.length; j++) {
+      cumulativeProbability += statusProbability[j];
+      if (rand <= cumulativeProbability) {
+        statusIndex = j;
+        break;
+      }
+    }
+    
+    const status = statuses[statusIndex];
+    
+    // Generate fee based on squad (templários slightly higher average)
+    let fee = 0;
+    if (squad === 'Templários') {
+      fee = Math.round(Math.random() * 5000 + 3000);
+    } else {
+      fee = Math.round(Math.random() * 4000 + 2000);
+    }
+    
+    // Generate LT (lifetime in months)
+    const lt = Math.round(Math.random() * 12 + 3);
+    
+    clients.push({
+      id: i,
+      name: `Cliente ${i}`,
+      squad,
+      fee,
+      lt,
+      status
+    });
+  }
+  
+  return clients;
+};
+
 export const getClientStats = (clients: Client[]) => {
   // Total clients
   const totalClients = clients.length;
